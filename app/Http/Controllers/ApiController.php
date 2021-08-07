@@ -12,14 +12,15 @@ class ApiController extends Controller
   {
     $lokasi_id = $request->query('lokasi_id', 1);
 
-    if ($lokasi_id > 2) {
+    $lokasi = DB::table('lokasi')->where('id', $lokasi_id)->first();
+    if (!$lokasi) {
       return response()->json([
         'status' => 'fail',
         'message' => 'Lokasi tidak ditemukan'
       ], 404);
     }
 
-    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->latest('id')->first();
+    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->latest('tanggal')->first();
     return response()->json($node);
   }
 
@@ -30,7 +31,6 @@ class ApiController extends Controller
     $location = $location->map(function ($item) {
       $latitude = str_replace(",", "", explode(" ", $item->kordinat)[0]);
       $longtitude =  explode(" ", $item->kordinat)[1];
-
 
       $item->kordinat = [
         'latitude' => $latitude,
@@ -46,15 +46,43 @@ class ApiController extends Controller
   public function historyApi(Request $request)
   {
     $date = $request->query('date', Carbon::now()->toDateString());
-    $node = DB::table('node')->whereDate('tanggal', '=', $date)->latest('id')->first();
+    $lokasi_id = $request->query('lokasi_id', 1);
+
+    $lokasi = DB::table('lokasi')->where('id', $lokasi_id)->first();
+    if (!$lokasi) {
+      return response()->json([
+        'status' => 'fail',
+        'message' => 'Lokasi tidak ditemukan'
+      ], 404);
+    }
+
+    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->whereDate('tanggal', '=', $date)->latest('tanggal')->first();
 
     return response()->json($node);
   }
 
-  public function statsApi()
+  public function statsApi(Request $request)
   {
-    $node_last = DB::table('node')->latest('tanggal')->first();
-    $node_first = DB::table('node')->first();
+    $lokasi_id = $request->query('lokasi_id');
+
+    $node_first = DB::table('node');
+    $node_last = DB::table('node');
+
+    if ($lokasi_id) {
+      $lokasi = DB::table('lokasi')->where('id', $lokasi_id)->first();
+      if (!$lokasi) {
+        return response()->json([
+          'status' => 'fail',
+          'message' => 'Lokasi tidak ditemukan'
+        ], 404);
+      }
+
+      $node_first = $node_first->where('lokasi_id', $lokasi_id);
+      $node_last = $node_last->where('lokasi_id', $lokasi_id);
+    }
+
+    $node_first = $node_first->first('tanggal');
+    $node_last = $node_last->latest('tanggal')->first();
 
     return response()->json([
       'first_date' => Carbon::parse($node_first->tanggal)->format('Y-m-d'),
