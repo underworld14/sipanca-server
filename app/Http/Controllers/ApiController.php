@@ -82,8 +82,8 @@ class ApiController extends Controller
       $node_last = $node_last->where('lokasi_id', $lokasi_id);
     }
 
-    $node_first = $node_first->orderBy('tanggal', 'desc')->first();
-    $node_last = $node_last->orderBy('tanggal', 'asc')->first();
+    $node_first = $node_first->orderBy('tanggal', 'asc')->first();
+    $node_last = $node_last->orderBy('tanggal', 'desc')->first();
 
     return response()->json([
       'first_date' => Carbon::parse($node_first->tanggal)->format('Y-m-d'),
