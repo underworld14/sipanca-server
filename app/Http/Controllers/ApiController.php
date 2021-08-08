@@ -20,7 +20,7 @@ class ApiController extends Controller
       ], 404);
     }
 
-    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->latest('tanggal')->first();
+    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->orderBy('tanggal', 'desc')->first();
     return response()->json($node);
   }
 
@@ -46,7 +46,7 @@ class ApiController extends Controller
   public function historyApi(Request $request)
   {
     $date = $request->query('date', Carbon::now()->toDateString());
-    $lokasi_id = $request->query('lokasi_id', 1);
+    $lokasi_id = $request->query('lokasi_id');
 
     $lokasi = DB::table('lokasi')->where('id', $lokasi_id)->first();
     if (!$lokasi) {
@@ -56,7 +56,7 @@ class ApiController extends Controller
       ], 404);
     }
 
-    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->whereDate('tanggal', '=', $date)->latest('tanggal')->first();
+    $node = DB::table('node')->where('lokasi_id', $lokasi_id)->whereDate('tanggal', '=', $date)->orderBy('tanggal', 'desc')->first();
 
     return response()->json($node);
   }
@@ -67,6 +67,7 @@ class ApiController extends Controller
 
     $node_first = DB::table('node');
     $node_last = DB::table('node');
+
 
     if ($lokasi_id) {
       $lokasi = DB::table('lokasi')->where('id', $lokasi_id)->first();
@@ -81,8 +82,8 @@ class ApiController extends Controller
       $node_last = $node_last->where('lokasi_id', $lokasi_id);
     }
 
-    $node_first = $node_first->first('tanggal');
-    $node_last = $node_last->latest('tanggal')->first();
+    $node_first = $node_first->orderBy('tanggal', 'desc')->first();
+    $node_last = $node_last->orderBy('tanggal', 'asc')->first();
 
     return response()->json([
       'first_date' => Carbon::parse($node_first->tanggal)->format('Y-m-d'),
